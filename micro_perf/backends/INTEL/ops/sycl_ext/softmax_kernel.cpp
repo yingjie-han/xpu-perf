@@ -1,4 +1,5 @@
 #include <torch/extension.h>
+#include <c10/xpu/XPUStream.h>
 
 #include <sycl/sycl.hpp>
 
@@ -13,9 +14,8 @@ namespace py = pybind11;
 
 namespace {
 
-inline sycl::queue& get_cached_queue() {
-  static thread_local sycl::queue q{sycl::gpu_selector_v};
-  return q;
+inline sycl::queue& get_current_queue() {
+  return c10::xpu::getCurrentXPUStream().queue();
 }
 
 template <typename scalar_t>
@@ -106,7 +106,7 @@ void softmax_compute_into_impl(
   auto* d_in = reinterpret_cast<scalar_t*>(input.data_ptr());
   auto* d_out = reinterpret_cast<scalar_t*>(output.data_ptr());
 
-  sycl::queue& q = get_cached_queue();
+  sycl::queue& q = get_current_queue();
   const int device_wg_max = static_cast<int>(
       q.get_device().get_info<sycl::info::device::max_work_group_size>());
 

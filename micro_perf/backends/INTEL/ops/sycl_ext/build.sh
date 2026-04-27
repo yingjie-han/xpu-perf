@@ -84,7 +84,6 @@ echo "Built: $SCRIPT_DIR/reduce_max_sycl.so"
 ls -la reduce_max_sycl.so
 
 echo ""
-<<<<<<< HEAD
 echo "Building scatter SYCL extension..."
 icpx -fsycl -shared -fPIC -O3 -std=c++17 \
     -DTORCH_EXTENSION_NAME=scatter_sycl \
@@ -97,7 +96,8 @@ icpx -fsycl -shared -fPIC -O3 -std=c++17 \
 
 echo "Built: $SCRIPT_DIR/scatter_sycl.so"
 ls -la scatter_sycl.so
-=======
+
+echo ""
 echo "Building softmax SYCL extension..."
 icpx -fsycl -shared -fPIC -O3 -std=c++17 \
     -DTORCH_EXTENSION_NAME=softmax_sycl \
@@ -106,8 +106,7 @@ icpx -fsycl -shared -fPIC -O3 -std=c++17 \
     softmax_kernel.cpp \
     -o softmax_sycl.so \
     $TORCH_LIBS \
-    -ltorch -ltorch_python -lc10
+    -ltorch -ltorch_python -lc10 -lc10_xpu
 
 echo "Built: $SCRIPT_DIR/softmax_sycl.so"
 ls -la softmax_sycl.so
->>>>>>> e8b559f (INTEL softmax: add sycl_ext provider)
