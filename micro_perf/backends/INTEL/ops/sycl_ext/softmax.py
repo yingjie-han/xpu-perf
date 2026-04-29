@@ -143,32 +143,34 @@ try:
             all_tensor_list = self._create_in_out_tensors(
                 instance_num,
                 create_inputs=True,
-                create_outputs=True,
+                create_outputs=False,
             )
             for tensor_mapping in all_tensor_list:
                 self._fill_src_tensor(tensor_mapping["src"])
             return all_tensor_list
 
         def _run_sycl_so_compute(self, tensor_mapping):
+            dst = tensor_mapping.get("dst")
+            if dst is None:
+                dst = torch.empty_like(tensor_mapping["src"])
             self._sycl_so.softmax_compute_into(
                 tensor_mapping["src"],
-                tensor_mapping["dst"],
+                dst,
                 float(self._so_cfg["softmax_scale"]),
                 int(self._so_cfg["k_block"]),
                 int(self._so_cfg["wg_size"]),
                 str(self._so_cfg["smalldim_mode"]),
                 int(self._so_cfg["rows_per_group"]),
             )
-            return None
+            return dst
 
         def _verify_so_compute_once(self):
             tensor_mapping = self._create_tensors_for_so(1)[0]
-            self._run_sycl_so_compute(tensor_mapping)
+            got = self._run_sycl_so_compute(tensor_mapping)
             if hasattr(torch, "xpu") and hasattr(torch.xpu, "synchronize"):
                 torch.xpu.synchronize()
 
             src = tensor_mapping["src"]
-            got = tensor_mapping["dst"]
             ref = torch.nn.functional.softmax(src * float(self._so_cfg["softmax_scale"]), dim=-1)
 
             if self.dtype == "float32":
